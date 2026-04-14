@@ -52,7 +52,7 @@ func main() {
 ```
 FROM golang:alpine AS builder
 WORKDIR /app
-COPY . .
+COPY . .  
 RUN go build -o app
 
 FROM alpine
