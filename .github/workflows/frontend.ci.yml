@@ -1,0 +1,44 @@
+name: Frontend CI
+
+on:
+    push:
+        paths:
+            - 'frontend/**'
+    pull_request:
+        paths:
+            - 'frontend/**'
+
+jobs:
+    build-and-test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v4
+
+            - name: Build Frontend Image
+              uses: docker/build-push-action@v7
+              with:
+                context: ./frontend
+                load: true
+                tags: frontend-app:test
+            
+            - name: Run Container
+              run: |
+               docker run -d --name frontend-test -p 8080:80 frontend-app:test
+               sleep 5
+            - name: Verify Frontend
+              run: |
+                RESPONSE=$(curl -s http://localhost:8080)
+                echo "Response: $RESPONSE"
+                if [[ "$RESPONSE" == *"Hello from the frontend!"* ]]; then
+                  echo "Frontend verification successful!"
+                else
+                  echo "Frontend verification failed!"
+                  exit 1
+                fi
+            - name: Shutdown Container
+              if: always()
+              run: docker rm -f frontend-test
